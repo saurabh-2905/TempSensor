@@ -1,52 +1,25 @@
 # TODO Add machine.reset() on error with hardware, set timer for restart if connection to TTN impossible 
 
-
-import pycom
-import time
-from machine import Pin, I2C, SD
-import os
-from network import WLAN
-import usocket as socket
-import uselect
-import _thread
-import uerrno
-import json
-
-# Imports of classes that represent the connected sensors and devices
-from dht import DTH
-from adxl345 import ADXL345
-from itg3200 import ITG3200
-from buzzer import Buzzer
-# Import of a file containing functions for connecting to TTN.
-import LoRaConnection
-
 # Import Pysense libraries
 from pycoproc_2 import Pycoproc
+import pycom
+import time
+import _thread
+import json
 
 from LIS2HH12 import LIS2HH12
 from SI7006A20 import SI7006A20
-from LTR329ALS01 import LTR329ALS01
-from MPL3115A2 import MPL3115A2,ALTITUDE,PRESSURE
+# Import of a file containing functions for connecting to TTN.
+import LoRaConnection
 
 from lib.varlogger import VarLogger as logger
 
-
+### initialize logger
+logt = logger()
 
 # This function resides in the LoRaConnection.py file. It is used to create the connection to The Things Network and block further execution until a connection has been established
 LoRaConnection.connectToTTN()
 
-
-# print ("Welcome")
-# currentSsid = '73569a'
-# currentPassword = '285254244'
-
-# wlan = WLAN(mode=WLAN.STA)
-# wlan.connect(ssid=currentSsid, auth=(WLAN.WPA2, currentPassword))
-# while not wlan.isconnected():
-#     time.sleep(1)
-#     print("Wifi ... Connecting to " + currentSsid)
-
-# print ("Wifi is Connected")
 
 # init pyproc for reading data
 py = Pycoproc()
@@ -59,23 +32,10 @@ pycom.rgbled(0x8B0000) # red
 time.sleep(5)
 
 # # Below is the initialisation of all hardware components that are connected to the LoPy4
-# # The th variable contains an instance of the DTH class from a driver library which reads out the binary data from the sensor and converts it to temperature (C) and humidity (%).
-# # The data pin of the DHT11 is connected to pin 23
-# th = DTH(Pin('P23', mode=Pin.OPEN_DRAIN),0)
 si = SI7006A20(py)
 
 # # The adx and itg variables hold instances of classes that represent the ADXL345 accelerometer and ITG3200 gyroscope respectively.
-# # We pass the I2C bus to the classes in order for them to know which pins the bus is connected to.
-# adx = ADXL345(i2c)
-# itg = ITG3200(i2c)
 li = LIS2HH12(py)
-
-
-
-# The buzzer variable holds an instance of the Buzzer class that represents the piezo-speaker connected to pin 20 of the LoPy4.
-# buzzer = Buzzer(buzzerPin='P20')
-
-# url = '192.168.0.11'
 
 # The tenMinutes and thirtyMinutes variables hold values of ten and thirty minutes in seconds, respectively.
 tenMinutes = 1 * 60
@@ -167,15 +127,7 @@ while True:
             LoRaConnection.sendSocketData(dataForSocket)
 
 
-    time.sleep_ms(100)
+    time.sleep_ms(1000)
 
 
 
-# s = socket.socket()
-# s.connect(socket.getaddrinfo(url, 9090)[0][-1])
-# dataForSocket = json.dumps(sensorData)
-# s.send(dataForSocket)
-# # Wait for the response and receive it in a variable
-# response = s.recv(len(dataForSocket))
-# print("RESPONSE: ", response)
-# s.close()
