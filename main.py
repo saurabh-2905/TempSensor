@@ -28,6 +28,8 @@ from SI7006A20 import SI7006A20
 from LTR329ALS01 import LTR329ALS01
 from MPL3115A2 import MPL3115A2,ALTITUDE,PRESSURE
 
+from lib.varlogger import VarLogger as logger
+
 
 
 # This function resides in the LoRaConnection.py file. It is used to create the connection to The Things Network and block further execution until a connection has been established
