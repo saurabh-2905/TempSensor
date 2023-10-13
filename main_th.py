@@ -4,7 +4,7 @@ import pycom
 import _thread
 from network import LoRa
 import socket
-import time
+import utime
 
 from LIS2HH12 import LIS2HH12
 from SI7006A20 import SI7006A20
@@ -13,13 +13,12 @@ import LoRaConnection
 
 from varlogger import VarLogger as logger
 
-### initialize logger
-### initialize it outside the scope of any function to allow access to all the code
-logt = logger()
+
 
 ### put all the functionality in different functions to be able to run in multiple threads, use a class with methods as '@classmethod' so that we can pass class itslef as an argument and dont need to make an instance to be able to use class variables
 def main():
-    lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868)
+    global lock
+    print('thread id1:', _thread.get_ident())
     ### init pyproc for reading data
     py = Pycoproc()
 
@@ -28,7 +27,7 @@ def main():
 
     ### Set indicator LED to blue in order to signify that a successful connection has been established and that the sensor readout is now starting
     pycom.rgbled(0x00008B) # blue
-    time.sleep(5)
+    utime.sleep(2)
 
     ### Below is the initialisation of all hardware components that are connected to the LoPy4
     si = SI7006A20(py)
@@ -54,16 +53,18 @@ def main():
 
     ### This is the main part of the programme which runs in an infinite loop until the device is stopped or an error occurs. Indicator set to green to show arrival at main loop
     pycom.rgbled(0x008B00) # green
-    time.sleep(5)
-
-    ### sense the data
-    acceleration = sense(li)
-
-    ### send the data via lora communication
-    # acquire lock
-    # write data to shared resource
-    # set the flag of communication 
-    # release the lock
+    i=0
+    while i <50:
+        ### sense the data
+        acceleration = sense(li)
+        utime.sleep(2)
+        ### send the data via lora communication
+        lock.acquire()
+        ### push data to control and signal the communication thread to tx the data
+        control.updatedata(acceleration)
+        control.settx()
+        lock.release()
+        i+=1
 
     ### Turn on the PyCom "Heartbeat" - the constant blinking of the indicator LED
     pycom.heartbeat(True)
@@ -71,9 +72,10 @@ def main():
 
 
 def sense(li):
-    # The acceleration info is requested from the sensor at every loop
+    global lock, start_time
+    ### The acceleration info is requested from the sensor at every loop
     acceleration = li.acceleration()
-    print("Acceleration: " + str(acceleration))
+    print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
     xAcceleration = acceleration[0]
     yAcceleration = acceleration[1]
     zAcceleration = acceleration[0]
@@ -85,35 +87,87 @@ def process():
     pass
 
 def loracom():
-    
-    # check for the communication flag
-    # acquire the lock
-    # get the data from shared resource
-    # release the lock
+    global lock, start_time
+    print('thread 2:', _thread.get_ident())
+    lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868)
 
-    ### create a LoRa socket
-    s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
+    i=0
+    while i < 10:
+        if control.readtx():
+            print('lora:', utime.ticks_diff(utime.ticks_ms(), start_time))
+            lock.acquire()
+            data = str(control.readdata()[0])
+            print(data)
+            control.resettx()
+            lock.release()
+            ### create a LoRa socket
+            s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
 
-    ### make the socket blocking
-    ###(waits for the data to be sent and for the 2 receive windows to expire)
-    s.setblocking(False)
+            ### make the socket blocking
+            ###(waits for the data to be sent and for the 2 receive windows to expire)
+            s.setblocking(False)
 
-    ### send some data
-    s.send(data)
+            ### send some data
+            s.send(data)
+            print('Data sent')
 
-    ### make the socket non-blocking
-    ### (because if there's no data received it will block forever...)
-    s.close()
+            ### make the socket non-blocking
+            ### (because if there's no data received it will block forever...)
+            s.close()
+            utime.sleep(6)
+            i+=1
 
 
-class threadcom:
+class control:
+    '''
+    this class is used to communicate between threads and manage shared resources
+    @classmethod: allows to pass the class as the argument, inturn allows to update the attributes of the class without creating the instance of the class
+    '''
+    sensor_data = []
+    tx_flag = False
+
     @classmethod
     def timerflag(cls):
         pass
 
     @classmethod
-    def sharedres(cls):
-        pass
+    def updatedata(cls, data):
+        ### update the sensor data in shared variable
+        cls.sensor_data = [data]
+    
+    @classmethod
+    def readdata(cls):
+        ### read the sensor data from shared variable
+        return cls.sensor_data
+    
+    @classmethod
+    def settx(cls):
+        ### set the tx_flag to indicate the tx for communication thread
+        cls.tx_flag = True
+
+    @classmethod
+    def resettx(cls):
+        ### reset the tx_flag to indicate the tx for communication thread
+        cls.tx_flag = False
+
+    @classmethod
+    def readtx(cls):
+        ### check the status of the tx_flag to indicate the tx for communication thread
+        return cls.tx_flag
 
 
+
+try:
+    ### initialize logger
+    ### initialize it outside the scope of any function to allow access to all the code
+    start_time = utime.ticks_ms()
+    logt = logger()
+
+    lock = _thread.allocate_lock()
     main_thread = _thread.start_new_thread(main, ())
+    comm_thread = _thread.start_new_thread(loracom, ())
+    print(main_thread)
+    print(comm_thread)
+
+except KeyboardInterrupt as e:
+    print(e)
