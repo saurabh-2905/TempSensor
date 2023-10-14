@@ -31,7 +31,10 @@ class VarLogger:
         else:
             self.data_dict[var] = [utime.ticks_ms()]
 
-        self.log_seq(var_name)
+        ### make the event name based on the scope
+        event = f'{th}_{clas}_{fun}_{var}'
+        ### log the sequence to trace file
+        self.log_seq(event)
         
         self._write_count +=1
         print(self._write_count)
