@@ -12,24 +12,24 @@ class VarLogger:
         self.write_name, self.trace_name = self.check_files()  ### avoid overwriting previous log
 
 
-    def log(self, var_name):
+    def log(self, var, fun='fun', clas='cls', th='th'):
         '''
-        var_name -> str = name of the variable
+        var -> str = name of the variable
         '''
         dict_keys = self.data_dict.keys()
 
-        if var_name in dict_keys:
-            _varlist = self.data_dict[var_name]
+        if var in dict_keys:
+            _varlist = self.data_dict[var]
 
             ### save only 500 latest values for each variable
             while len(_varlist) >= 500: 
                 self._catchpop = _varlist.pop(0)
             
             _varlist += [utime.ticks_ms()]
-            self.data_dict[var_name] = _varlist
+            self.data_dict[var] = _varlist
 
         else:
-            self.data_dict[var_name] = [utime.ticks_ms()]
+            self.data_dict[var] = [utime.ticks_ms()]
 
         self.log_seq(var_name)
         
