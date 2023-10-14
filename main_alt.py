@@ -58,8 +58,6 @@ def main():
             ### transmit data periodically
             print('timer status:', control.read_timer0())
             if control.read_timer0() > 5000: ### in ms
-                # control.settx()
-                # control.resett0()
                 loracom()
                 control.reset_timer0() ### time in seconds
             #lock.release()
@@ -93,7 +91,6 @@ def loracom():
     #lock.acquire()
     data = str(control.readdata()[0])
     print(data)
-    control.resettx()
     #lock.release()
     ### create a LoRa socket
     s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
@@ -136,43 +133,12 @@ class control:
         return cls.sensor_data
     
     @classmethod
-    def settx(cls):
-        ### set the tx_flag to indicate the tx for communication thread
-        cls.tx_flag = True
-
-    @classmethod
-    def resettx(cls):
-        ### reset the tx_flag to indicate the tx for communication thread
-        cls.tx_flag = False
-
-    @classmethod
-    def readtx(cls):
-        ### check the status of the tx_flag to indicate the tx for communication thread
-        return cls.tx_flag
-    
-    @classmethod
     def init_timer0(cls):
         ### initialize the timer object with duration equal to time
         #cls.timer0.init(Timer.ONE_SHOT, time, cls.sett0)
         #timer0 = Timer.Alarm(cls.sett0, time, periodic=False)  ### time in seconds, as no arguments passed to callback it passes the object itself
         cls.timer0.start()
         print(cls.timer0.read_ms())  ### check
-
-    # @classmethod
-    # def sett0(cls):
-    #     ### set the flag to indicate timer0 has completed counting
-    #     cls.timer0_done = True
-    #     print('timer done', cls.timer0_done)
-
-    # @classmethod
-    # def resett0(cls):
-    #     ### clear the flag to enable user to use the timer0 again
-    #     cls.timer0_done = False
-
-    # @classmethod
-    # def check_timer0(cls):
-    #     ### get the status of timer0 to check if it has completed counting
-    #     return cls.timer0_done
     
     @classmethod
     def read_timer0(cls):
