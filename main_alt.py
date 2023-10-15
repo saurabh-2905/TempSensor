@@ -13,14 +13,20 @@ from SI7006A20 import SI7006A20
 ### Import of a file containing functions for connecting to TTN.
 import LoRaConnection
 
-from varlogger import VarLogger as logger
+from varlogger import VarLogger as vl
 
 
 
 ### put all the functionality in different functions to be able to run in multiple threads, use a class with methods as '@classmethod' so that we can pass class itslef as an argument and dont need to make an instance to be able to use class variables
 def main():
     try:
-        print('thread id1:', _thread.get_ident())
+        #///// private variables to log the traces
+        _thread_id = _thread.get_ident()
+        _fun_name = 'main'
+        _cls_name = 'cls'
+
+        print('thread id1:', _thread_id)
+        vl.thread_status(_thread_id, 'active')  #/// update the thread status
         ### init pyproc for reading data
         py = Pycoproc()
 
@@ -65,48 +71,77 @@ def main():
 
         ### Turn on the PyCom "Heartbeat" - the constant blinking of the indicator LED
         pycom.heartbeat(True)
-    except KeyboardInterrupt:
+        vl.thread_status(_thread_id, 'dead') #//// update the thread status
+    except Exception as e:
+        print('main thread error:', e)
+        vl.thread_status(_thread_id, 'dead')  #/// update the thread status
+        vl.write_data() #//// save the traces to flash
+        pycom.heartbeat(True)
         _thread.exit()
 
 
 
 def sense(li):
-    global start_time
-    ### The acceleration info is requested from the sensor at every loop
-    acceleration = li.acceleration()
-    print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
-    xAcceleration = acceleration[0]
-    yAcceleration = acceleration[1]
-    zAcceleration = acceleration[0]
+    global start_time#///// private variables to log the traces
+    _thread_id = _thread.get_ident()
+    _fun_name = 'sense'
+    _cls_name = 'cls'
+
+    vl.thread_status(_thread_id, 'active') #/// update the thread status
+    
+    try: #////
+        ### The acceleration info is requested from the sensor at every loop
+        acceleration = li.acceleration()
+        print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
+        xAcceleration = acceleration[0]
+        yAcceleration = acceleration[1]
+        zAcceleration = acceleration[0]
+    except: #////
+        vl.thread_status(_thread_id, 'dead') #/// update the thread status
+        vl.write_data() #//// save the traces to flash
+        pycom.heartbeat(True)
 
     return acceleration
     
 
 def loracom():
     global start_time
-    print('thread 2:', _thread.get_ident())
-    lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868)   
-    
-    print('lora:', utime.ticks_diff(utime.ticks_ms(), start_time))
-    #lock.acquire()
-    data = str(control.readdata()[0])
-    print(data)
-    #lock.release()
-    ### create a LoRa socket
-    s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
 
-    ### make the socket blocking
-    ###(waits for the data to be sent and for the 2 receive windows to expire)
-    s.setblocking(False)
+    #///// private variables to log the traces
+    _thread_id = _thread.get_ident()
+    _fun_name = 'loracom'
+    _cls_name = 'cls'
 
-    ### send some data
-    s.send(data)
-    print('Data sent')
+    vl.thread_status(_thread_id, 'active') #//// update the thread status
 
-    ### make the socket non-blocking
-    ### (because if there's no data received it will block forever...)
-    s.close()
-    utime.sleep(2)
+    try: #/////
+        print('thread 2:', _thread.get_ident())
+        lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868)   
+        
+        print('lora:', utime.ticks_diff(utime.ticks_ms(), start_time))
+        #lock.acquire()
+        data = str(control.readdata()[0])
+        print(data)
+        #lock.release()
+        ### create a LoRa socket
+        s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
+
+        ### make the socket blocking
+        ###(waits for the data to be sent and for the 2 receive windows to expire)
+        s.setblocking(False)
+
+        ### send some data
+        s.send(data)
+        print('Data sent')
+
+        ### make the socket non-blocking
+        ### (because if there's no data received it will block forever...)
+        s.close()
+        utime.sleep(2)
+    except Exception: #/////
+        vl.thread_status(_thread_id, 'dead') #//// update the thread status
+        vl.write_data() #//// save the traces to flash
+        pycom.heartbeat(True)
 
 class control:
     '''
@@ -121,16 +156,31 @@ class control:
 
     @classmethod
     def updatedata(cls, data):
+        #///// private variables to log the traces
+        _thread_id = _thread.get_ident()
+        _fun_name = 'updatedata'
+        _cls_name = cls.__name__
+
         ### update the sensor data in shared variable
         cls.sensor_data = [data]
     
     @classmethod
     def readdata(cls):
+        #///// private variables to log the traces
+        _thread_id = _thread.get_ident()
+        _fun_name = 'readdata'
+        _cls_name = cls.__name__
+
         ### read the sensor data from shared variable
         return cls.sensor_data
     
     @classmethod
     def init_timer0(cls):
+        #///// private variables to log the traces
+        _thread_id = _thread.get_ident()
+        _fun_name = 'init_timer0'
+        _cls_name = cls.__name__
+
         ### initialize the timer object with duration equal to time
         #cls.timer0.init(Timer.ONE_SHOT, time, cls.sett0)
         #timer0 = Timer.Alarm(cls.sett0, time, periodic=False)  ### time in seconds, as no arguments passed to callback it passes the object itself
@@ -139,16 +189,31 @@ class control:
     
     @classmethod
     def read_timer0(cls):
+        #///// private variables to log the traces
+        _thread_id = _thread.get_ident()
+        _fun_name = 'read_timer0'
+        _cls_name = cls.__name__
+
         ### get the count of timer0 to check if it has completed counting (milliseconds)
         return cls.timer0.read_ms()
     
     @classmethod
     def reset_timer0(cls):
+        #///// private variables to log the traces
+        _thread_id = _thread.get_ident()
+        _fun_name = 'reset_timer0'
+        _cls_name = cls.__name__
+
         ### reset chrono timer
         cls.timer0.reset()
     
     @classmethod
     def stop_timer0(cls):
+        #///// private variables to log the traces
+        _thread_id = _thread.get_ident()
+        _fun_name = 'stop_timer0'
+        _cls_name = cls.__name__
+
         ### stop chrono timer
         cls.timer0.stop()
 
@@ -157,9 +222,27 @@ class control:
 try:
     ### initialize it outside the scope of any function to allow access to all the code
     start_time = utime.ticks_ms()
-
+    vl.thread_status('main', 'active') #//// update the thread status
     main_thread = _thread.start_new_thread(main, ())
-    #comm_thread = _thread.start_new_thread(loracom, ())
 
-except RuntimeError as e:
+    while True:
+        ### check if threads are running
+        # TODO: implement logic in the functions and here to check status of threads
+        ids, thread_info = vl.thread_status()
+        
+        status = [thread_info[x] for x in ids]
+        #print(ids)
+        print(status)
+        utime.sleep(2)
+
+        ### enter REPL if main thread of application is dead
+        if len(status) >= 1:
+            if status[-1] == 'dead':
+                _thread.exit()
+                pycom.heartbeat(True)
+
+except Exception as e:
+    vl.write_data() #//// save the data
+    vl.thread_status('main', 'dead') #//// indicate other threads that main thread has crashed
     print('Error message:', e)
+    pycom.heartbeat(True)
