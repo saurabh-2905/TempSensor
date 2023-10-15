@@ -12,10 +12,8 @@ from SI7006A20 import SI7006A20
 # Import of a file containing functions for connecting to TTN.
 import LoRaConnection
 
-from lib.varlogger import VarLogger as logger
+from varlogger import VarLogger as logger
 
-### initialize logger
-logt = logger()
 
 # This function resides in the LoRaConnection.py file. It is used to create the connection to The Things Network and block further execution until a connection has been established
 LoRaConnection.connectToTTN()
