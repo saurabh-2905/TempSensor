@@ -158,10 +158,8 @@ class control:
 
 
 try:
-    ### initialize logger
     ### initialize it outside the scope of any function to allow access to all the code
     start_time = utime.ticks_ms()
-    logt = logger()
 
     main_thread = _thread.start_new_thread(main, ())
     #comm_thread = _thread.start_new_thread(loracom, ())
