@@ -12,7 +12,8 @@ class VarLogger:
         self.write_name, self.trace_name = self.check_files()  ### avoid overwriting previous log
 
 
-    def log(self, var, fun='fun', clas='cls', th='th'):
+
+    def log(self, var='0', fun='0', clas='0', th='0'):
         '''
         var -> str = name of the variable
         '''
