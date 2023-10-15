@@ -118,9 +118,6 @@ class control:
     timer0_done = False ### flag to indicate timer had completed count to trigger other processes
     timer0 = Timer.Chrono()
 
-    @classmethod
-    def timerflag(cls):
-        pass
 
     @classmethod
     def updatedata(cls, data):
