@@ -65,7 +65,7 @@ def main():
         i=0
         #//// logging
         vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
-        while i <20:
+        while i <100:
             ### sense the data
             acceleration = sense(li)
             #//// logging
