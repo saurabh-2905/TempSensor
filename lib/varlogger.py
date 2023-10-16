@@ -24,25 +24,24 @@ class VarLogger:
         var -> str = name of the variable
         '''
         dict_keys = cls.data_dict.keys()
+        ### map thread id to a single digit integer fo simplicity
+        th = cls.map_thread(th)
+        ### make the event name based on the scope
+        event = '{}_{}_{}_{}'.format(th, clas, fun, var)
 
-        if var!=0 and var in dict_keys:
-            _varlist = cls.data_dict[var]
+        if event in dict_keys:
+            _varlist = cls.data_dict[event]
 
             ### save only 500 latest values for each variable
             while len(_varlist) >= 500: 
                 cls._catchpop = _varlist.pop(0)
             
             _varlist += [utime.ticks_ms()]
-            cls.data_dict[var] = _varlist
+            cls.data_dict[event] = _varlist
 
         else:
-            cls.data_dict[var] = [utime.ticks_ms()]
+            cls.data_dict[event] = [utime.ticks_ms()]
 
-        ### map thread id to a single digit integer fo simplicity
-        th = cls.map_thread(th)
-
-        ### make the event name based on the scope
-        event = '{}_{}_{}_{}'.format(th, clas, fun, var)
         ### log the sequence to trace file
         cls.log_seq(event)
         
