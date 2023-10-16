@@ -94,9 +94,6 @@ def sense(li):
         ### The acceleration info is requested from the sensor at every loop
         acceleration = li.acceleration()
         print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
-        xAcceleration = acceleration[0]
-        yAcceleration = acceleration[1]
-        zAcceleration = acceleration[0]
     except: #////
         vl.thread_status(_thread_id, 'dead') #/// update the thread status
         vl.save() #//// save the traces to flash
