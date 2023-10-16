@@ -23,7 +23,7 @@ def main():
         #///// private variables to log the traces
         _thread_id = _thread.get_ident()
         _fun_name = 'main'
-        _cls_name = 'cls'
+        _cls_name = '0'
 
         print('thread id1:', _thread_id)
         vl.thread_status(_thread_id, 'active')  #/// update the thread status
@@ -85,7 +85,7 @@ def sense(li):
     global start_time#///// private variables to log the traces
     _thread_id = _thread.get_ident()
     _fun_name = 'sense'
-    _cls_name = 'cls'
+    _cls_name = '0'
 
     vl.thread_status(_thread_id, 'active') #/// update the thread status
     
@@ -110,7 +110,7 @@ def loracom():
     #///// private variables to log the traces
     _thread_id = _thread.get_ident()
     _fun_name = 'loracom'
-    _cls_name = 'cls'
+    _cls_name = '0'
 
     vl.thread_status(_thread_id, 'active') #//// update the thread status
 
