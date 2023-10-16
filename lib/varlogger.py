@@ -24,7 +24,7 @@ class VarLogger:
         '''
         dict_keys = cls.data_dict.keys()
 
-        if var in dict_keys:
+        if var!=0 and var in dict_keys:
             _varlist = cls.data_dict[var]
 
             ### save only 500 latest values for each variable
