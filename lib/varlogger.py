@@ -13,6 +13,7 @@ class VarLogger:
     data_dict = {}  ### store timestamp for each variable
     _catchpop = 0  ### temporary storage
     _write_count = 0  ### count to track writing frequency
+    _thread_map = dict() ### to map the threads to integer numbers
 
     ####### thread tracking
     threads_info = dict() ### init a dictionary to store the status of each thread
@@ -36,6 +37,9 @@ class VarLogger:
 
         else:
             cls.data_dict[var] = [utime.ticks_ms()]
+
+        ### map thread id to a single digit integer fo simplicity
+        th = cls.map_thread(th)
 
         ### make the event name based on the scope
         event = '{}_{}_{}_{}'.format(th, clas, fun, var)
@@ -103,6 +107,24 @@ class VarLogger:
 
         ### if status is given then update the status for respective thread
         if status!=None and thread_id!=None :
+            ### update the status of the thread in the dict
             cls.threads_info[thread_id] = status
+
+            ### add the thread to mapping dict
+            num = cls._thread_map.keys()
+            if thread_id not in num:
+                ### as kernel thread is already initialized with name='main', so the thread count start with 1, which is also the len(num) due to main thread
+                cls._thread_map[thread_id] = len(list(num)) 
+
         else:
             return(ids, cls.threads_info)
+        
+    @classmethod
+    def map_thread(cls, thread_id):
+        ### amp the long thread id to an integer based on thread_map
+        num = cls._thread_map.keys()
+        if thread_id not in num:
+            raise('Thread not found')
+        
+        mapped_id = cls._thread_map[thread_id]
+        return mapped_id
