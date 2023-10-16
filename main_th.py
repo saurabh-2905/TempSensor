@@ -13,6 +13,9 @@ import LoRaConnection
 
 from varlogger import VarLogger as logger
 
+#############################
+#### Multi Thread Code ######
+#############################
 
 
 ### put all the functionality in different functions to be able to run in multiple threads, use a class with methods as '@classmethod' so that we can pass class itslef as an argument and dont need to make an instance to be able to use class variables
