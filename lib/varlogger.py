@@ -47,7 +47,7 @@ class VarLogger:
         cls.log_seq(event)
         
         cls._write_count +=1
-        print(cls._write_count)
+        #print(cls._write_count)
         ### write to flash approx every 6 secs (counting to 1000 = 12 ms)
         if cls._write_count >= 10:
             cls._write_count = 0
