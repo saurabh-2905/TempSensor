@@ -236,7 +236,7 @@ try:
         utime.sleep(2)
 
         ### enter REPL if main thread of application is dead
-        if len(status) >= 1:
+        if len(status) > 1:
             if status[-1] == 'dead':
                 _thread.exit()
                 pycom.heartbeat(True)
