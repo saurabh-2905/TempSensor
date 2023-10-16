@@ -25,7 +25,7 @@ def main():
         _fun_name = 'main'
         _cls_name = '0'
 
-        print('thread id1:', _thread_id)
+        #print('thread id1:', _thread_id)
         vl.thread_status(_thread_id, 'active')  #/// update the thread status
         ### init pyproc for reading data
         py = Pycoproc()
@@ -62,7 +62,7 @@ def main():
             control.updatedata(acceleration)
 
             ### transmit data periodically
-            print('timer status:', control.read_timer0())
+            #print('timer status:', control.read_timer0())
             if control.read_timer0() > 5000: ### in ms
                 loracom()
                 control.reset_timer0() ### time in seconds
@@ -120,13 +120,13 @@ def loracom():
     vl.thread_status(_thread_id, 'active') #//// update the thread status
 
     try: #/////
-        print('thread 2:', _thread.get_ident())
+        #print('thread 2:', _thread.get_ident())
         lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868)   
         
-        print('lora:', utime.ticks_diff(utime.ticks_ms(), start_time))
+        #print('lora:', utime.ticks_diff(utime.ticks_ms(), start_time)) ### use ticks_diff only fordebugging
         #lock.acquire()
         data = str(control.readdata()[0])
-        print(data)
+        #print(data)
         #lock.release()
         ### create a LoRa socket
         s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
@@ -190,7 +190,8 @@ class control:
         #cls.timer0.init(Timer.ONE_SHOT, time, cls.sett0)
         #timer0 = Timer.Alarm(cls.sett0, time, periodic=False)  ### time in seconds, as no arguments passed to callback it passes the object itself
         cls.timer0.start()
-        print(cls.timer0.read_ms())  ### check
+        print('Timer Initialized')
+        #print(cls.timer0.read_ms())  ### check
     
     @classmethod
     def read_timer0(cls):
