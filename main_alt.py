@@ -67,6 +67,11 @@ def main():
                 loracom()
                 control.reset_timer0() ### time in seconds
             #lock.release()
+
+            # ### testing code
+            # if i == 5:
+            #     raise(RuntimeError)
+
             i+=1
 
         ### Turn on the PyCom "Heartbeat" - the constant blinking of the indicator LED
