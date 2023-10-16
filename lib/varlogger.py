@@ -14,7 +14,7 @@ class VarLogger:
     _catchpop = 0  ### temporary storage
     _write_count = 0  ### count to track writing frequency
     _thread_map = dict() ### to map the threads to integer numbers
-
+    write_name, trace_name = ['', '']
     ####### thread tracking
     threads_info = dict() ### init a dictionary to store the status of each thread
 
@@ -78,14 +78,15 @@ class VarLogger:
     
     @classmethod
     def write_data(cls):
-        write_name, trace_name = cls.check_files()  ### get the name to write the files and avoid overwriting previous log
-        with open(write_name, 'w') as fp:
+        if cls.write_name=='' and cls.trace_name=='':
+            cls.write_name, cls.trace_name = cls.check_files()  ### get the name to write the files and avoid overwriting previous log
+        with open(cls.write_name, 'w') as fp:
             json.dump(cls.data_dict, fp)
-            print('dict saved', write_name)
+            print('dict saved', cls.write_name)
 
-        with open(trace_name, 'w') as fp:
+        with open(cls.trace_name, 'w') as fp:
             json.dump(cls.data, fp)
-            print('trace saved', trace_name)
+            print('trace saved', cls.trace_name)
 
     @classmethod
     def save(cls):
