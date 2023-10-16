@@ -43,10 +43,6 @@ def main():
         ### The adx and itg variables hold instances of classes that represent the ADXL345 accelerometer and ITG3200 gyroscope respectively.
         li = LIS2HH12(py)
 
-        ### The tenMinutes and thirtyMinutes variables hold values of ten and thirty minutes in seconds, respectively.
-        tenMinutes = 1 * 60
-        thirtyMinutes = 3 * tenMinutes
-
 
         ### This is the main part of the programme which runs in an infinite loop until the device is stopped or an error occurs. Indicator set to green to show arrival at main loop
         pycom.rgbled(0x008B00) # green
