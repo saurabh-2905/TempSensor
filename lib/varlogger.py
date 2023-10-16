@@ -84,6 +84,11 @@ class VarLogger:
             print('trace saved', trace_name)
 
     @classmethod
+    def save(cls):
+        #### using write_data in main scripts results in empty log files, data is lost
+        cls.write_data()
+
+    @classmethod
     def thread_status(cls, thread_id=None, status=None):
         '''
         update or retrive the status of the thread. If no value is given to 'status' and 'thread_id' it will return the status of all the threads and it's ids
