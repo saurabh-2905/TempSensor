@@ -7,6 +7,7 @@ import socket
 import utime
 import machine
 from machine import Timer
+import sys
 
 from LIS2HH12 import LIS2HH12
 from SI7006A20 import SI7006A20
@@ -88,6 +89,7 @@ def main():
             #     raise(RuntimeError)
 
             i+=1
+            print(i)
             #//// logging
             vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
 
@@ -285,8 +287,13 @@ try:
         ### enter REPL if main thread of application is dead
         if len(status) > 1:
             if status[-1] == 'dead':
-                _thread.exit()
+                #//// save the data
+                vl.save()
+                ### log the error message
                 pycom.heartbeat(True)
+                #_thread.exit()
+                #machine.reset()
+               
 
 except Exception as e:
     #//// save the data
