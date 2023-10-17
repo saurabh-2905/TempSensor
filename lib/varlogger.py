@@ -1,6 +1,7 @@
 import utime
 import json
 import os
+import sys
 
 class VarLogger:
     '''
@@ -128,3 +129,10 @@ class VarLogger:
         
         mapped_id = cls._thread_map[thread_id]
         return mapped_id
+    
+    @classmethod
+    def traceback(cls, exc):
+        ### write the traceback that is generated in the except block to a text file for future debugging
+        with open("traceback.txt", "a", encoding="utf-8") as f:
+            f.write('\n {} \n'.format(utime.ticks_ms()))
+            sys.print_exception(exc, f)
