@@ -98,11 +98,13 @@ def main():
         #//// update the thread status
         vl.thread_status(_thread_id, 'dead') 
     except Exception as e:
-        print('main thread error:', e)
-        #/// update the thread status
-        vl.thread_status(_thread_id, 'dead')  
         #//// save the traces to flash
-        vl.save() 
+        vl.save()
+        print('main thread error:', e)  
+        #/// log the traceback message
+        vl.traceback(e)
+        #/// update the thread status
+        vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
         _thread.exit()
 
@@ -124,10 +126,12 @@ def sense(li):
         vl.log(var='acceleration', fun=_fun_name, clas=_cls_name, th=_thread_id)
         print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
     except: #////
-        #/// update the thread status
-        vl.thread_status(_thread_id, 'dead') 
         #//// save the traces to flash
         vl.save() 
+        #/// log the traceback message
+        vl.traceback(e)
+        #/// update the thread status
+        vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
 
     return acceleration
@@ -170,10 +174,12 @@ def loracom():
         s.close()
         utime.sleep(2)
     except Exception: #/////
-        #//// update the thread status
-        vl.thread_status(_thread_id, 'dead') 
         #//// save the traces to flash
         vl.save()
+        #/// log the traceback message
+        vl.traceback(e)
+        #//// update the thread status
+        vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
 
 class control:
@@ -298,7 +304,7 @@ try:
 except Exception as e:
     #//// save the data
     vl.save() 
-    #//// indicate other threads that main thread has crashed
-    vl.thread_status('main', 'dead') 
+    #/// log the traceback message
+    vl.traceback(e)
     print('Error message:', e)
     pycom.heartbeat(True)
