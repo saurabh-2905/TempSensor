@@ -7,6 +7,7 @@ import socket
 import utime
 import machine
 from machine import Timer
+import sys
 
 from LIS2HH12 import LIS2HH12
 from SI7006A20 import SI7006A20
@@ -65,7 +66,7 @@ def main():
         i=0
         #//// logging
         vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
-        while i <20:
+        while i <100:
             ### sense the data
             acceleration = sense(li)
             #//// logging
@@ -78,7 +79,7 @@ def main():
 
             ### transmit data periodically
             #print('timer status:', control.read_timer0())
-            if control.read_timer0() > 5000: ### in ms
+            if control.read_timer0() > 50000: ### in ms
                 loracom()
                 control.reset_timer0() ### time in seconds
             #lock.release()
@@ -88,6 +89,7 @@ def main():
             #     raise(RuntimeError)
 
             i+=1
+            print(i)
             #//// logging
             vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
 
@@ -96,11 +98,13 @@ def main():
         #//// update the thread status
         vl.thread_status(_thread_id, 'dead') 
     except Exception as e:
-        print('main thread error:', e)
-        #/// update the thread status
-        vl.thread_status(_thread_id, 'dead')  
         #//// save the traces to flash
-        vl.save() 
+        vl.save()
+        print('main thread error:', e)  
+        #/// log the traceback message
+        vl.traceback(e)
+        #/// update the thread status
+        vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
         _thread.exit()
 
@@ -122,10 +126,12 @@ def sense(li):
         vl.log(var='acceleration', fun=_fun_name, clas=_cls_name, th=_thread_id)
         print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
     except: #////
-        #/// update the thread status
-        vl.thread_status(_thread_id, 'dead') 
         #//// save the traces to flash
         vl.save() 
+        #/// log the traceback message
+        vl.traceback(e)
+        #/// update the thread status
+        vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
 
     return acceleration
@@ -168,10 +174,12 @@ def loracom():
         s.close()
         utime.sleep(2)
     except Exception: #/////
-        #//// update the thread status
-        vl.thread_status(_thread_id, 'dead') 
         #//// save the traces to flash
         vl.save()
+        #/// log the traceback message
+        vl.traceback(e)
+        #//// update the thread status
+        vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
 
 class control:
@@ -285,13 +293,18 @@ try:
         ### enter REPL if main thread of application is dead
         if len(status) > 1:
             if status[-1] == 'dead':
-                _thread.exit()
+                #//// save the data
+                vl.save()
+                ### log the error message
                 pycom.heartbeat(True)
+                #_thread.exit()
+                machine.reset()
+               
 
 except Exception as e:
     #//// save the data
     vl.save() 
-    #//// indicate other threads that main thread has crashed
-    vl.thread_status('main', 'dead') 
+    #/// log the traceback message
+    vl.traceback(e)
     print('Error message:', e)
     pycom.heartbeat(True)
