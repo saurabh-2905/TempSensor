@@ -79,7 +79,7 @@ def main():
 
             ### transmit data periodically
             #print('timer status:', control.read_timer0())
-            if control.read_timer0() > 50000: ### in ms
+            if control.read_timer0() > 5000: ### in ms
                 loracom()
                 control.reset_timer0() ### time in seconds
             #lock.release()

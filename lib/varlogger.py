@@ -15,9 +15,22 @@ class VarLogger:
     _catchpop = 0  ### temporary storage
     _write_count = 0  ### count to track writing frequency
     _thread_map = dict() ### to map the threads to integer numbers
-    write_name, trace_name = ['', '']
+    write_name, trace_name = ['log0', 'trace0']
     ####### thread tracking
     threads_info = dict() ### init a dictionary to store the status of each thread
+
+    ### avoid overwriting existing files by checking existing files
+    prev_file = ''
+    with open('log_check', 'rb') as f:
+        f = f.readline()
+        prev_file = f
+
+    if prev_file != '':
+        cur_file = int(prev_file)+1
+        write_name = 'log{}'.format(cur_file)
+        trace_name = 'trace{}'.format(cur_file)
+        with open('log_check', 'wb') as f:
+            f.write(str(cur_file))
 
     @classmethod
     def log(cls, var='0', fun='0', clas='0', th='0'):
@@ -51,7 +64,7 @@ class VarLogger:
         ### write to flash approx every 6 secs (counting to 1000 = 12 ms)
         if cls._write_count >= 10:
             cls._write_count = 0
-            cls.write_data() ### save the data to flash
+            #cls.write_data() ### save the data to flash
                 
 
     @classmethod
@@ -78,8 +91,6 @@ class VarLogger:
     
     @classmethod
     def write_data(cls):
-        if cls.write_name=='' and cls.trace_name=='':
-            cls.write_name, cls.trace_name = cls.check_files()  ### get the name to write the files and avoid overwriting previous log
         with open(cls.write_name, 'w') as fp:
             json.dump(cls.data_dict, fp)
             print('dict saved', cls.write_name)
