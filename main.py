@@ -53,7 +53,7 @@ def main():
 
         ### Set indicator LED to blue in order to signify that a successful connection has been established and that the sensor readout is now starting
         pycom.rgbled(0x00008B) # blue
-        utime.sleep(2)
+        utime.sleep_ms(500)
 
         ### Declare timer
         com_timer = Clock()
@@ -81,7 +81,7 @@ def main():
             acceleration = sense(li)
             #//// logging
             vl.log(var='acceleration', fun=_fun_name, clas=_cls_name, th=_thread_id)
-            utime.sleep(2)
+            utime.sleep_ms(500)
             ### send the data via lora communication
             #lock.acquire()
             ### push data to control and signal the communication thread to tx the data
@@ -167,7 +167,6 @@ def loracom(socket, timer):
         #//// logging
         vl.log(var='data', fun=_fun_name, clas=_cls_name, th=_thread_id)
         #print(data)
-        timer.done = False
         
         ### make the socket blocking
         ###(waits for the data to be sent and for the 2 receive windows to expire)
@@ -176,6 +175,7 @@ def loracom(socket, timer):
         ### send some data
         socket.send(data)
         print('Data sent')
+        timer.done = False
 
         ### make the socket non-blocking
         ### (because if there's no data received it will block forever...)
