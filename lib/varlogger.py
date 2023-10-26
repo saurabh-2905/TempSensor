@@ -16,6 +16,7 @@ class VarLogger:
     _write_count = 0  ### count to track writing frequency
     _thread_map = dict() ### to map the threads to integer numbers
     write_name, trace_name = ['log0', 'trace0']
+
     ####### thread tracking
     threads_info = dict() ### init a dictionary to store the status of each thread
 
@@ -50,11 +51,11 @@ class VarLogger:
             while len(_varlist) >= 500: 
                 cls._catchpop = _varlist.pop(0)
             
-            _varlist += [utime.ticks_ms()]
+            _varlist += [utime.ticks_ms() - cls.created_timestamp]
             cls.data_dict[event] = _varlist
 
         else:
-            cls.data_dict[event] = [utime.ticks_ms()]
+            cls.data_dict[event] = [utime.ticks_ms() - cls.created_timestamp]
 
         ### log the sequence to trace file
         cls.log_seq(event)
