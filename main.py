@@ -43,6 +43,11 @@ def main():
         #//// logging
         vl.log(var='lora', fun=_fun_name, clas=_cls_name, th=_thread_id) 
 
+        ### create a LoRa socket
+        s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
+        #//// logging
+        vl.log(var='s', fun=_fun_name, clas=_cls_name, th=_thread_id)
+
         ### Turn off the PyCom "Heartbeat" - the constant blinking of the indicator LED
         pycom.heartbeat(False)
 
@@ -50,6 +55,11 @@ def main():
         pycom.rgbled(0x00008B) # blue
         utime.sleep(2)
 
+        ### Declare timer
+        com_timer = Clock()
+        vl.log(var='com_timer', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        ### start timer
+        com_timer.start(5000) ### count for 5 sec
         ### Below is the initialisation of all hardware components that are connected to the LoPy4
         si = SI7006A20(py)
         #//// logging
@@ -79,9 +89,8 @@ def main():
 
             ### transmit data periodically
             #print('timer status:', control.read_timer0())
-            if control.read_timer0() > 5000: ### in ms
-                loracom()
-                control.reset_timer0() ### time in seconds
+            if com_timer.done: ### in ms
+                loracom(s, com_timer)
             #lock.release()
 
             # ### testing code
@@ -105,6 +114,7 @@ def main():
         vl.traceback(e)
         #/// update the thread status
         vl.thread_status(_thread_id, 'dead') 
+        com_timer.stop()
         pycom.heartbeat(True)
         _thread.exit()
 
@@ -137,7 +147,7 @@ def sense(li):
     return acceleration
     
 
-def loracom():
+def loracom(socket, timer):
     global start_time
 
     #///// private variables to log the traces
@@ -151,28 +161,24 @@ def loracom():
         #print('thread 2:', _thread.get_ident())   
         
         #print('lora:', utime.ticks_diff(utime.ticks_ms(), start_time)) ### use ticks_diff only fordebugging
-        #lock.acquire()
+        lock.acquire()
         data = str(control.readdata()[0])
+        lock.release()
         #//// logging
         vl.log(var='data', fun=_fun_name, clas=_cls_name, th=_thread_id)
         #print(data)
-        #lock.release()
-        ### create a LoRa socket
-        s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
-        #//// logging
-        vl.log(var='s', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        timer.done = False
+        
         ### make the socket blocking
         ###(waits for the data to be sent and for the 2 receive windows to expire)
-        s.setblocking(False)
+        socket.setblocking(False)
 
         ### send some data
-        s.send(data)
+        socket.send(data)
         print('Data sent')
 
         ### make the socket non-blocking
         ### (because if there's no data received it will block forever...)
-        s.close()
-        utime.sleep(2)
     except Exception: #/////
         #//// save the traces to flash
         vl.save()
@@ -182,6 +188,23 @@ def loracom():
         vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
 
+class Clock():
+    def start(self, time):
+        '''
+        time in ms
+        '''
+        self.alarm = Timer.Alarm(handler=self.cb, ms=time, periodic=True)
+        self.done = False
+
+    def cb(self, alarm):
+        #lock.acquire()
+        self.done = True
+        #lock.release()
+        #print('clock done')
+
+    def stop(self):
+        self.alarm.cancel()
+        
 class control:
     '''
     this class is used to communicate between threads and manage shared resources
@@ -274,9 +297,14 @@ class control:
 
 
 
+#####################################################
+############### main functionality ##################
+#####################################################
 try:
     ### initialize it outside the scope of any function to allow access to all the code
     start_time = utime.ticks_ms()
+    #### get lock to regulate the access to shared resources
+    lock = _thread.allocate_lock()
     #/// update the thread status
     vl.thread_status('main', 'active') #//// update the thread status
     main_thread = _thread.start_new_thread(main, ())
