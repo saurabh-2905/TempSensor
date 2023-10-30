@@ -20,6 +20,9 @@ from lib.varlogger import VarLogger as vl
 #### Single Thread Code #####
 #############################
 
+### declare global variables
+global g_ack
+g_ack = False
 
 ### put all the functionality in different functions to be able to run in multiple threads, use a class with methods as '@classmethod' so that we can pass class itslef as an argument and dont need to make an instance to be able to use class variables
 def main():
@@ -31,8 +34,11 @@ def main():
 
         #print('thread id1:', _thread_id)
 
+        ### declare global variables
+        global g_ack
+
         #/// update the thread status
-        vl.thread_status(_thread_id, 'active')  
+        vl.thread_status(_thread_id, 'active')   
 
         ### init pyproc for reading data
         py = Pycoproc()
@@ -42,6 +48,8 @@ def main():
         lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868)
         #//// logging
         vl.log(var='lora', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+
+        lora.callback(LoRa.RX_PACKET_EVENT, handler=lora_cb)
 
         ### create a LoRa socket
         s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
@@ -83,15 +91,29 @@ def main():
             vl.log(var='acceleration', fun=_fun_name, clas=_cls_name, th=_thread_id)
             utime.sleep_ms(500)
             ### send the data via lora communication
-            #lock.acquire()
+            lock.acquire()
             ### push data to control and signal the communication thread to tx the data
             control.updatedata(acceleration)
+            lock.release()
 
             ### transmit data periodically
             #print('timer status:', control.read_timer0())
             if com_timer.done: ### in ms
                 loracom(s, com_timer)
-            #lock.release()
+
+            if g_ack:
+                g_ack = False 
+                vl.log(var='g_ack', fun=_fun_name, clas=_cls_name, th=_thread_id)
+                events = lora.events()
+                #//// logging
+                vl.log(var='events', fun=_fun_name, clas=_cls_name, th=_thread_id)
+
+                if events & LoRa.RX_PACKET_EVENT:
+                    print('Lora packet received')
+                    lock.acquire()
+                    ### remove the packet from queue if ack received
+                    control.update_rxmsg()
+                    lock.release()
 
             # ### testing code
             # if i == 5:
@@ -134,8 +156,8 @@ def sense(li):
         acceleration = li.acceleration()
         #//// logging
         vl.log(var='acceleration', fun=_fun_name, clas=_cls_name, th=_thread_id)
-        print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
-    except: #////
+        #print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
+    except Exception as e: #////
         #//// save the traces to flash
         vl.save() 
         #/// log the traceback message
@@ -173,7 +195,11 @@ def loracom(socket, timer):
         socket.setblocking(False)
 
         ### send some data
-        socket.send(data)
+        socket.send('123456') ### send dummy data to check at receiver side
+        lock.acquire()
+        ### add the packet to msg_queue to keep track of packet delivery
+        control.update_txmsg(data)
+        lock.release()
         print('Data sent')
         timer.done = False
 
@@ -187,6 +213,16 @@ def loracom(socket, timer):
         #//// update the thread status
         vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
+
+def lora_cb(lora):
+    #///// private variables to log the traces
+    _thread_id = _thread.get_ident()
+    _fun_name = 'lora_cb'
+    _cls_name = '0'
+
+    global g_ack
+    g_ack = True
+    
 
 class Clock():
     def start(self, time):
@@ -214,6 +250,7 @@ class control:
     tx_flag = False   ### to indidcate transmission if loracom runs in seperate thread
     timer0_done = False ### flag to indicate timer had completed count to trigger other processes
     timer0 = Timer.Chrono()
+    msg_queue = []
 
 
     @classmethod
@@ -295,6 +332,32 @@ class control:
         #//// logging
         vl.log(fun=_fun_name, clas=_cls_name, th=_thread_id)
 
+    @classmethod
+    def update_txmsg(cls, data):
+        '''
+        data: transmitted packets 
+        '''
+        _thread_id = _thread.get_ident()
+        _fun_name = 'update_txmsg'
+        _cls_name = cls.__name__
+
+        cls.msg_queue += [data]
+        print('Tx:', cls.msg_queue)
+
+        vl.log(fun=_fun_name, clas=_cls_name, th=_thread_id)
+
+    @classmethod
+    def update_rxmsg(cls):
+        '''
+        remove the packet if ack received
+        '''
+        _thread_id = _thread.get_ident()
+        _fun_name = 'update_rxmsg'
+        _cls_name = cls.__name__
+
+        drop = cls.msg_queue.pop(0)
+        vl.log(var='drop',fun=_fun_name, clas=_cls_name, th=_thread_id)
+        print('Rx:',cls. msg_queue)
 
 
 #####################################################
