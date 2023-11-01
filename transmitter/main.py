@@ -11,6 +11,11 @@ import sys
 
 from LIS2HH12 import LIS2HH12
 from SI7006A20 import SI7006A20
+
+from machine import Pin
+from ds18x20_single import DS18X20Single
+from onewire import OneWire
+
 ### Import of a file containing functions for connecting to TTN.
 import LoRaConnection
 
@@ -41,9 +46,16 @@ def main():
         vl.thread_status(_thread_id, 'active')   
 
         ### init pyproc for reading data
-        py = Pycoproc()
+        #py = Pycoproc()
         #//// logging
-        vl.log(var='py', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+        #vl.log(var='py', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+
+        #### one wire temp sensor
+        ow = OneWire(Pin('P10'))
+        vl.log(var='ow', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+        temp = DS18X20Single(ow)
+        vl.log(var='temp', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+        temp.convert_temp()
 
         lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868)
         #//// logging
@@ -69,14 +81,14 @@ def main():
         ### start timer
         com_timer.start(5000) ### count for 5 sec
         ### Below is the initialisation of all hardware components that are connected to the LoPy4
-        si = SI7006A20(py)
+        #si = SI7006A20(py)
         #//// logging
-        vl.log(var='si', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+        #vl.log(var='si', fun=_fun_name, clas=_cls_name, th=_thread_id) 
 
         ### The adx and itg variables hold instances of classes that represent the ADXL345 accelerometer and ITG3200 gyroscope respectively.
-        li = LIS2HH12(py)
+        #li = LIS2HH12(py)
         #//// logging
-        vl.log(var='li', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+        #vl.log(var='li', fun=_fun_name, clas=_cls_name, th=_thread_id) 
 
         ### This is the main part of the programme which runs in an infinite loop until the device is stopped or an error occurs. Indicator set to green to show arrival at main loop
         pycom.rgbled(0x008B00) # green
@@ -86,10 +98,10 @@ def main():
         vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
         while i <100:
             ### sense the data
-            acceleration = sense(li)
+            #acceleration = sense(li)
+            temperature = sense(temp)
             #//// logging
-            vl.log(var='acceleration', fun=_fun_name, clas=_cls_name, th=_thread_id)
-            utime.sleep_ms(500)
+            vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id)
             ### send the data via lora communication
             lock.acquire()
             ### push data to control and signal the communication thread to tx the data
@@ -142,7 +154,7 @@ def main():
 
 
 
-def sense(li):
+def sense(te):
     global start_time#///// private variables to log the traces
     _thread_id = _thread.get_ident()
     _fun_name = 'sense'
@@ -153,10 +165,11 @@ def sense(li):
     
     try: #////
         ### The acceleration info is requested from the sensor at every loop
-        acceleration = li.acceleration()
-        #//// logging
-        vl.log(var='acceleration', fun=_fun_name, clas=_cls_name, th=_thread_id)
-        #print("Acceleration: " + str(acceleration), utime.ticks_diff(utime.ticks_ms(), start_time))
+        #acceleration = li.acceleration()
+        temperature = te.read_temp()
+        vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        te.convert_temp()
+        utime.sleep(1)
     except Exception as e: #////
         #//// save the traces to flash
         vl.save() 
@@ -166,7 +179,7 @@ def sense(li):
         vl.thread_status(_thread_id, 'dead') 
         pycom.heartbeat(True)
 
-    return acceleration
+    return temperature
     
 
 def loracom(socket, timer):
@@ -222,7 +235,7 @@ def lora_cb(lora):
 
     global g_ack
     g_ack = True
-    
+
 
 class Clock():
     def start(self, time):
