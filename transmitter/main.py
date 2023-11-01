@@ -105,7 +105,8 @@ def main():
             ### send the data via lora communication
             lock.acquire()
             ### push data to control and signal the communication thread to tx the data
-            control.updatedata(acceleration)
+            if temperature != None:
+                control.updatedata(temperature)
             lock.release()
 
             ### transmit data periodically
