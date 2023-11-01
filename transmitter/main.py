@@ -369,7 +369,7 @@ class control:
         _fun_name = 'update_rxmsg'
         _cls_name = cls.__name__
 
-        drop = cls.msg_queue.pop(0)
+        drop = cls.msg_queue.pop(-1)
         vl.log(var='drop',fun=_fun_name, clas=_cls_name, th=_thread_id)
         print('Rx:',cls. msg_queue)
 
