@@ -96,7 +96,7 @@ def main():
         i=0
         #//// logging
         vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
-        while i <100:
+        while i <2000:
             ### sense the data
             #acceleration = sense(li)
             temperature = sense(temp)
@@ -107,6 +107,7 @@ def main():
             ### push data to control and signal the communication thread to tx the data
             if temperature != None:
                 control.updatedata(temperature)
+                print('temp:', temperature)
             lock.release()
 
             ### transmit data periodically
@@ -402,8 +403,12 @@ try:
                 vl.save()
                 ### log the error message
                 pycom.heartbeat(True)
-                #_thread.exit()
-                machine.reset()
+                with open('log_check', 'rb') as f:
+                    f = f.readline()
+                    if f <= '2':
+                        machine.reset()
+                    else:
+                        _thread.exit()
                
 
 except Exception as e:
