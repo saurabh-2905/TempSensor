@@ -43,22 +43,23 @@ class VarLogger:
         th = cls.map_thread(th)
         ### make the event name based on the scope
         event = '{}_{}_{}_{}'.format(th, clas, fun, var)
+        log_time = utime.ticks_ms() - cls.created_timestamp
 
         if event in dict_keys:
             _varlist = cls.data_dict[event]
 
             ### save only 500 latest values for each variable
-            while len(_varlist) >= 500: 
+            while len(_varlist) >= 1000: 
                 cls._catchpop = _varlist.pop(0)
             
-            _varlist += [utime.ticks_ms() - cls.created_timestamp]
+            _varlist += [log_time]
             cls.data_dict[event] = _varlist
 
         else:
-            cls.data_dict[event] = [utime.ticks_ms() - cls.created_timestamp]
+            cls.data_dict[event] = [log_time]
 
         ### log the sequence to trace file
-        cls.log_seq(event)
+        cls.log_seq(event, log_time)
         
         cls._write_count +=1
         #print(cls._write_count)
@@ -69,8 +70,8 @@ class VarLogger:
                 
 
     @classmethod
-    def log_seq(cls, event):
-        cls.data += [event]
+    def log_seq(cls, event, log_time):
+        cls.data += [(event, log_time)]
 
     @classmethod
     def check_files(cls):
