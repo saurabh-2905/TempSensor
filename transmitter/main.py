@@ -103,12 +103,17 @@ def main():
             #//// logging
             vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id)
             ### send the data via lora communication
-            lock.acquire()
+            
             ### push data to control and signal the communication thread to tx the data
             if temperature != None:
+                lock.acquire()
                 control.updatedata(temperature)
-                print('temp:', temperature)
-            lock.release()
+                #print('temp:', temperature)
+                lock.release()
+            else: 
+                print(temperature)
+                with open('temp_log', 'a')as f:
+                    f.write("{} {}".format(temperature, utime.ticks_ms() - vl.created_timestamp))
 
             ### transmit data periodically
             #print('timer status:', control.read_timer0())
@@ -134,7 +139,7 @@ def main():
             #     raise(RuntimeError)
 
             i+=1
-            print(i)
+            print(i, utime.ticks_ms() - vl.created_timestamp)
             #//// logging
             vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
 
@@ -357,7 +362,7 @@ class control:
         _cls_name = cls.__name__
 
         cls.msg_queue += [data]
-        print('Tx:', cls.msg_queue)
+        #print('Tx:', cls.msg_queue)
 
         vl.log(fun=_fun_name, clas=_cls_name, th=_thread_id)
 
@@ -403,12 +408,13 @@ try:
                 vl.save()
                 ### log the error message
                 pycom.heartbeat(True)
-                with open('log_check', 'rb') as f:
-                    f = f.readline()
-                    if f <= '2':
-                        machine.reset()
-                    else:
-                        _thread.exit()
+                _thread.exit()
+                # with open('log_check', 'rb') as f:
+                #     f = f.readline()
+                #     if f <= '2':
+                #         machine.reset()
+                #     else:
+                #         _thread.exit()
                
 
 except Exception as e:
