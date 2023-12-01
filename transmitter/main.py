@@ -225,7 +225,7 @@ def loracom(socket, timer):
 
         ### make the socket non-blocking
         ### (because if there's no data received it will block forever...)
-    except Exception: #/////
+    except Exception as e: #/////
         #//// save the traces to flash
         vl.save()
         #/// log the traceback message
