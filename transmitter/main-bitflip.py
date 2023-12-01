@@ -96,6 +96,7 @@ def main():
         i=0
         #//// logging
         vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        j=20
         while i <2000:
             ### sense the data
             #acceleration = sense(li)
@@ -120,8 +121,16 @@ def main():
             if com_timer.done: ### in ms
                 loracom(s, com_timer)
 
+            ### decrease the duration of error
+            if i%200 == 0:
+                j+=3
+
             if g_ack:
-                g_ack = False 
+                print('g_ack:', g_ack)
+                if i%200 > j and i%200 <= 50:
+                    g_ack = True
+                else:
+                    g_ack = False 
                 vl.log(var='g_ack', fun=_fun_name, clas=_cls_name, th=_thread_id)
                 events = lora.events()
                 #//// logging
@@ -225,7 +234,7 @@ def loracom(socket, timer):
 
         ### make the socket non-blocking
         ### (because if there's no data received it will block forever...)
-    except Exception: #/////
+    except Exception as e: #/////
         #//// save the traces to flash
         vl.save()
         #/// log the traceback message
