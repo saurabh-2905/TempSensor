@@ -121,14 +121,12 @@ def main():
             if com_timer.done: ### in ms
                 loracom(s, com_timer)
 
-            ### decrease the duration of error
-            if i%200 == 0:
-                j+=3
-
             if g_ack:
                 print('g_ack:', g_ack)
                 if i%200 > j and i%200 <= 50:
                     g_ack = True
+                    if i%200 == 0:
+                        j+=3
                 else:
                     g_ack = False 
                 vl.log(var='g_ack', fun=_fun_name, clas=_cls_name, th=_thread_id)
@@ -234,7 +232,7 @@ def loracom(socket, timer):
 
         ### make the socket non-blocking
         ### (because if there's no data received it will block forever...)
-    except Exception as e: #/////
+    except Exception: #/////
         #//// save the traces to flash
         vl.save()
         #/// log the traceback message
