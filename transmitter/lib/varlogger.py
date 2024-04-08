@@ -16,6 +16,9 @@ class VarLogger:
     _write_count = 0  ### count to track writing frequency
     _thread_map = dict() ### to map the threads to integer numbers
     write_name, trace_name = ['log0', 'trace0']
+    _vardict = dict() ### dict of variables
+
+    
 
     ####### thread tracking
     threads_info = dict() ### init a dictionary to store the status of each thread
@@ -34,7 +37,7 @@ class VarLogger:
             f.write(str(cur_file))
 
     @classmethod
-    def log(cls, var='0', fun='0', clas='0', th='0'):
+    def log(cls, var='0', fun='0', clas='0', th='0', val=None):
         '''
         var -> str = name of the variable
         '''
@@ -45,21 +48,23 @@ class VarLogger:
         event = '{}_{}_{}_{}'.format(th, clas, fun, var)
         log_time = utime.ticks_ms() - cls.created_timestamp
 
-        if event in dict_keys:
-            _varlist = cls.data_dict[event]
+        event_num = cls._var2int(event)
+
+        if event_num in dict_keys:
+            _vartimestamps = cls.data_dict[event_num]
 
             ### save only 500 latest values for each variable
-            while len(_varlist) >= 1000: 
-                cls._catchpop = _varlist.pop(0)
+            while len(_vartimestamps) >= 500: 
+                cls._catchpop = _vartimestamps.pop(0)
             
-            _varlist += [log_time]
-            cls.data_dict[event] = _varlist
+            _vartimestamps += [(log_time, val)]
+            cls.data_dict[event_num] = _vartimestamps ### format of cls.data_dict = {event_num: [(timestamp1,val), (timestamp2, val), ...]}
 
         else:
-            cls.data_dict[event] = [log_time]
+            cls.data_dict[event_num] = [log_time]
 
         ### log the sequence to trace file
-        cls.log_seq(event, log_time)
+        cls.log_seq(event_num, log_time)
         
         cls._write_count +=1
         #print(cls._write_count)
@@ -70,26 +75,47 @@ class VarLogger:
                 
 
     @classmethod
+    def _var2int(cls, var):
+        '''
+        map the variable names to integers for easy access
+        '''
+        if var not in cls._vardict.keys():
+            cls._vardict[var] = len(list(cls._vardict.keys()))
+        
+        return cls._vardict[var]
+    
+    @classmethod
+    def _int2var(cls, num):
+        '''
+        map the integers back to variable names
+        '''
+        for key, value in cls._vardict.items():
+            if value == num:
+                return key
+
+    @classmethod
     def log_seq(cls, event, log_time):
         cls.data += [(event, log_time)]
 
-    @classmethod
-    def check_files(cls):
-        '''
-        check for previous log and update the name to avoid overwriting
-        '''
-        _files = os.listdir()
-        _filename = 'log0'
-        _seqname = 'trace0'
+    # @classmethod
+    # def check_files(cls):
+    #     '''
+    #     check for previous log and update the name to avoid overwriting
+    #     '''
+    #     _files = os.listdir()
+    #     _filename = 'log0'
+    #     _seqname = 'trace0'
+    #     _varlistname = 'varlist0'
 
-        for i in range(100):
-            if _filename in _files:
-                _filename = 'log{}'.format(i+1)
-                _seqname = 'trace{}'.format(i+1)
-            else:
-                break
+    #     for i in range(100):
+    #         if _filename in _files:
+    #             _filename = 'log{}'.format(i+1)
+    #             _seqname = 'trace{}'.format(i+1)
+    #             _varlistname = 'varlist{}'.format(i+1)
+    #         else:
+    #             break
 
-        return (_filename,_seqname)
+    #     return (_filename,_seqname, _varlistname)
     
     @classmethod
     def write_data(cls):
@@ -100,6 +126,10 @@ class VarLogger:
         with open(cls.trace_name, 'w') as fp:
             json.dump(cls.data, fp)
             print('trace saved', cls.trace_name)
+
+        with open('varlist'+ cls.trace_name[-1], 'w') as fp: ### save the variable list for each log file
+            json.dump(cls._vardict, fp)
+            print('varlist saved')
 
     @classmethod
     def save(cls):
