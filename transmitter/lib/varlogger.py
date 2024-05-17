@@ -45,7 +45,7 @@ class VarLogger:
         ### map thread id to a single digit integer fo simplicity
         th = cls.map_thread(th)
         ### make the event name based on the scope
-        event = '{}_{}_{}_{}'.format(th, clas, fun, var)
+        event = '{}-{}-{}-{}'.format(th, clas, fun, var)
         log_time = utime.ticks_ms() - cls.created_timestamp
 
         event_num = cls._var2int(event)
