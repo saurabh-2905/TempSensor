@@ -52,21 +52,21 @@ def main():
 
         #### one wire temp sensor
         ow = OneWire(Pin('P10'))
-        vl.log(var='ow', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+        vl.log(var='ow', fun=_fun_name, clas=_cls_name, th=_thread_id, val=ow) 
         temp = DS18X20Single(ow)
-        vl.log(var='temp', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+        vl.log(var='temp', fun=_fun_name, clas=_cls_name, th=_thread_id, val=temp) 
         temp.convert_temp()
 
         lora = LoRa(mode=LoRa.LORA, region=LoRa.EU868)
         #//// logging
-        vl.log(var='lora', fun=_fun_name, clas=_cls_name, th=_thread_id) 
+        vl.log(var='lora', fun=_fun_name, clas=_cls_name, th=_thread_id, val=lora) 
 
         lora.callback(LoRa.RX_PACKET_EVENT, handler=lora_cb)
 
         ### create a LoRa socket
         s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
         #//// logging
-        vl.log(var='s', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        vl.log(var='s', fun=_fun_name, clas=_cls_name, th=_thread_id, val=s)
 
         ### Turn off the PyCom "Heartbeat" - the constant blinking of the indicator LED
         pycom.heartbeat(False)
@@ -77,7 +77,7 @@ def main():
 
         ### Declare timer
         com_timer = Clock()
-        vl.log(var='com_timer', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        vl.log(var='com_timer', fun=_fun_name, clas=_cls_name, th=_thread_id, val=com_timer)
         ### start timer
         com_timer.start(5000) ### count for 5 sec
         ### Below is the initialisation of all hardware components that are connected to the LoPy4
@@ -95,13 +95,13 @@ def main():
         control.init_timer0() ### time in seconds
         i=0
         #//// logging
-        vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id, val=i)
         while i <2000:
             ### sense the data
             #acceleration = sense(li)
             temperature = sense(temp)
             #//// logging
-            vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id)
+            vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id, val=temperature)
             ### send the data via lora communication
             
             ### push data to control and signal the communication thread to tx the data
@@ -122,10 +122,10 @@ def main():
 
             if g_ack:
                 g_ack = False 
-                vl.log(var='g_ack', fun=_fun_name, clas=_cls_name, th=_thread_id)
+                vl.log(var='g_ack', fun=_fun_name, clas=_cls_name, th=_thread_id, val=g_ack)
                 events = lora.events()
                 #//// logging
-                vl.log(var='events', fun=_fun_name, clas=_cls_name, th=_thread_id)
+                vl.log(var='events', fun=_fun_name, clas=_cls_name, th=_thread_id, val=events)
 
                 if events & LoRa.RX_PACKET_EVENT:
                     print('Lora packet received')
@@ -134,14 +134,14 @@ def main():
                     control.update_rxmsg()
                     lock.release()
 
-            # ### testing code
-            # if i == 5:
-            #     raise(RuntimeError)
+            ### testing code
+            if i == 500:
+                raise(RuntimeError)
 
             i+=1
             print(i, utime.ticks_ms() - vl.created_timestamp)
             #//// logging
-            vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id)
+            vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id, val=i)
 
         ### Turn on the PyCom "Heartbeat" - the constant blinking of the indicator LED
         pycom.heartbeat(True)
@@ -174,7 +174,7 @@ def sense(te):
         ### The acceleration info is requested from the sensor at every loop
         #acceleration = li.acceleration()
         temperature = te.read_temp()
-        vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id, val=temperature)
         te.convert_temp()
         utime.sleep(1)
     except Exception as e: #////
@@ -207,7 +207,7 @@ def loracom(socket, timer):
         data = str(control.readdata()[0])
         lock.release()
         #//// logging
-        vl.log(var='data', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        vl.log(var='data', fun=_fun_name, clas=_cls_name, th=_thread_id, val=data)
         #print(data)
         
         ### make the socket blocking
@@ -225,7 +225,7 @@ def loracom(socket, timer):
 
         ### make the socket non-blocking
         ### (because if there's no data received it will block forever...)
-    except Exception: #/////
+    except Exception as e: #/////
         #//// save the traces to flash
         vl.save()
         #/// log the traceback message
@@ -283,7 +283,7 @@ class control:
         ### update the sensor data in shared variable
         cls.sensor_data = [data]
         #//// logging
-        vl.log(var='cls.sensor_data', fun=_fun_name, clas=_cls_name, th=_thread_id)
+        vl.log(var='cls.sensor_data', fun=_fun_name, clas=_cls_name, th=_thread_id, val=cls.sensor_data)
     
     @classmethod
     def readdata(cls):
@@ -376,7 +376,7 @@ class control:
         _cls_name = cls.__name__
 
         drop = cls.msg_queue.pop(-1)
-        vl.log(var='drop',fun=_fun_name, clas=_cls_name, th=_thread_id)
+        vl.log(var='drop',fun=_fun_name, clas=_cls_name, th=_thread_id, val=drop)
         print('Rx:',cls. msg_queue)
 
 
