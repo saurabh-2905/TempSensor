@@ -96,6 +96,7 @@ def main():
         i=0
         #//// logging
         vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id, val=i)
+        j=20
         while i <2000:
             ### sense the data
             #acceleration = sense(li)
@@ -121,7 +122,13 @@ def main():
                 loracom(s, com_timer)
 
             if g_ack:
-                g_ack = False 
+                print('g_ack:', g_ack)
+                if i%200 > j and i%200 <= 50:
+                    g_ack = True
+                    if i%200 == 0:
+                        j+=3
+                else:
+                    g_ack = False 
                 vl.log(var='g_ack', fun=_fun_name, clas=_cls_name, th=_thread_id, val=g_ack)
                 events = lora.events()
                 #//// logging
