@@ -19,6 +19,7 @@ class VarLogger:
     write_name, trace_name = ['log0', 'trace0']
     _vardict = dict() ### dict of variables
     cur_file = 0 ### file number
+    time_to_write = 0 ### time to write to flash
     
 
     ####### thread tracking
@@ -47,7 +48,7 @@ class VarLogger:
         th = cls.map_thread(th)
         ### make the event name based on the scope
         event = '{}-{}-{}-{}'.format(th, clas, fun, var)
-        log_time = utime.ticks_ms() - cls.created_timestamp
+        log_time = utime.ticks_ms() - cls.created_timestamp - cls.time_to_write
 
         event_num = cls._var2int(event)
 
@@ -75,7 +76,8 @@ class VarLogger:
             cls._write_count = 0
             start_time = utime.ticks_ms()
             cls.write_data() ### save the data to flash
-            print('write time for {}:'.format(num_events), utime.ticks_ms()-start_time)
+            cls.time_to_write += utime.ticks_ms()-start_time
+            print('write time for {}:'.format(num_events), cls.time_to_write)
             cls.data = [] ### clear the data after writing to flash
             gc.collect()
                 
