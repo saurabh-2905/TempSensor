@@ -150,11 +150,13 @@ class VarLogger:
         #     print('dict saved', cls.write_name)
 
         with open(cls.trace_name, 'w') as fp:
-            json.dump(cls.data, fp)
+            to_write = json.dumps(cls.data)
+            fp.write(to_write)
             print('trace saved', cls.trace_name)
 
         with open('varlist'+ cls.trace_name[5:], 'w') as fp: ### save the variable list for each log file
-            json.dump(cls._vardict, fp)
+            to_write = json.dumps(cls._vardict)
+            fp.write(to_write)
             print('varlist saved', cls.trace_name[5:])
 
         cls.cur_file += 1
