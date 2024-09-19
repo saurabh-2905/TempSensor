@@ -38,6 +38,14 @@ class VarLogger:
         pass
         ### load varfile
 
+    ####### avoid duplicate events
+    prev1_event = -1   ### to avoid clasing with first event with index 0
+    prev2_event = -1
+
+    prev1_time = 0
+    prev2_time = 0
+
+
     # ### avoid overwriting existing files by checking existing files
     # prev_file = ''
     # with open('log_check', 'rb') as f:
@@ -83,14 +91,17 @@ class VarLogger:
         # else:
         #     cls.data_dict[event_num] = [(log_time, val)]
 
-        ### log the sequence to trace file
-        cls.log_seq(event_num, log_time)
-        
-        cls._write_count +=1
+        ### log the sequence to trace file, but only unique events (avoid duplicates)
+        if cls.prev1_event != event_num:
+            cls.log_seq(event_num, log_time)
+            cls._write_count +=1
+        else:
+            pass
+
         #print(cls._write_count)
         ### write to flash approx every 6 secs (counting to 1000 = 12 ms)
-        num_events = 1000
-        if (cls._write_count >= num_events and save == None) or save == True:
+        num_events = 200
+        if (cls._write_count >= num_events and save != False):
             cls._write_count = 0
             start_time = utime.ticks_ms()
             cls.write_data() ### save the data to flash
@@ -98,6 +109,13 @@ class VarLogger:
             print('write time for {}:'.format(num_events), cls.time_to_write)
             cls.data = [] ### clear the data after writing to flash
             gc.collect()
+
+        ### check previous 3 events to avoid duplicate events
+        cls.prev2_event = cls.prev1_event
+        cls.prev1_event = event_num
+
+        cls.prev2_time = cls.prev1_time
+        cls.prev1_time = log_time
                 
 
     @classmethod
