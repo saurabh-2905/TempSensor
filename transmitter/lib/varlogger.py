@@ -72,6 +72,7 @@ class VarLogger:
     #     with open('log_check', 'wb') as f:
     #         f.write(str(cur_file))
 
+
     @classmethod
     def log(cls, var='0', fun='0', clas='0', th='0', val=None, save=None):
         '''
@@ -141,6 +142,7 @@ class VarLogger:
         
         return cls._vardict[var]
     
+
     @classmethod
     def _int2var(cls, num):
         '''
@@ -149,6 +151,7 @@ class VarLogger:
         for key, value in cls._vardict.items():
             if value == num:
                 return key
+
 
     @classmethod
     def log_seq(cls, event, log_time):
@@ -163,13 +166,6 @@ class VarLogger:
                 cls.buffer_index = 0
             ### if the buffer is empty/full, initialize it
             elif cls.buffer_index == 0:
-                gc.collect()  # Run garbage collection again, if needed
-                before = gc.mem_free()  # Get available memory after allocation
-                cls.data1 = [(0, 0)] * cls.TRACE_LENGTH
-                gc.collect()  # Run garbage collection again, if needed
-                after = gc.mem_free()  # Get available memory after allocation
-                used_memory =  after - before # Calculate used memory
-                print("Memory used by full buffer list: {} bytes".format(used_memory))  # Print used memory
                 cls.data1[cls.buffer_index] = (event, log_time)
                 cls.buffer_index += 1
             else:
@@ -186,7 +182,6 @@ class VarLogger:
                 cls.buffer_index = 0
             ### if the buffer is empty/full, initialize it
             elif cls.buffer_index == 0:
-                cls.data2 = [(0, 0)] * cls.TRACE_LENGTH
                 cls.data2[cls.buffer_index] = (event, log_time)
                 cls.buffer_index += 1
             else:
@@ -214,6 +209,7 @@ class VarLogger:
 
     #     return (_filename,_seqname, _varlistname)
     
+
     @classmethod
     def write_data(cls):
         # with open(cls.write_name, 'w') as fp:
@@ -224,29 +220,43 @@ class VarLogger:
             with open(cls.trace_name, 'w') as fp:
                 to_write = json.dumps(cls.data1)
                 fp.write(to_write)
+                # json.dump(cls.data1, fp)
                 print('buffer1 saved', cls.trace_name)
                 ### clear the buffer after writing to flash
                 cls.save_buffer = 0
+                gc.collect()  # Run garbage collection again, if needed
+                before = gc.mem_free()  # Get available memory after allocation
+                cls.data1 = [(0, 0)] * cls.TRACE_LENGTH
+                gc.collect()  # Run garbage collection again, if needed
+                after = gc.mem_free()  # Get available memory after allocation
+                used_memory =  after - before # Calculate used memory
+                print("Memory used by full buffer list: {} bytes".format(used_memory))  # Print used memory
+
         elif cls.save_buffer == 2:
             with open(cls.trace_name, 'w') as fp:
                 to_write = json.dumps(cls.data2)
                 fp.write(to_write)
+                # json.dump(cls.data2, fp)
                 print('buffer2 saved', cls.trace_name)
                 ### clear the buffer after writing to flash
                 cls.save_buffer = 0
+                cls.data2 = [(0, 0)] * cls.TRACE_LENGTH
 
         with open('varlist'+ cls.trace_name[5:], 'w') as fp: ### save the variable list for each log file
             to_write = json.dumps(cls._vardict)
             fp.write(to_write)
+            # json.dump(cls._vardict, fp)
             print('varlist saved', cls.trace_name[5:])
 
         cls.cur_file += 1
         cls.trace_name = 'trace{}'.format(cls.cur_file)
 
+
     @classmethod
     def save(cls):
         #### using write_data in main scripts results in empty log files, data is lost
         cls.write_data()
+
 
     @classmethod
     def thread_status(cls, thread_id=None, status=None):
@@ -275,6 +285,7 @@ class VarLogger:
         else:
             return(ids, cls.threads_info)
         
+
     @classmethod
     def map_thread(cls, thread_id):
         ### amp the long thread id to an integer based on thread_map
@@ -285,6 +296,7 @@ class VarLogger:
         mapped_id = cls._thread_map[thread_id]
         return mapped_id
     
+
     @classmethod
     def traceback(cls, exc):
         ### write the traceback that is generated in the except block to a text file for future debugging
