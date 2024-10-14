@@ -32,11 +32,6 @@ g_ack = False
 ### put all the functionality in different functions to be able to run in multiple threads, use a class with methods as '@classmethod' so that we can pass class itslef as an argument and dont need to make an instance to be able to use class variables
 def main():
     try:
-        #///// private variables to log the traces
-        _thread_id = _thread.get_ident()
-        _fun_name = 'main'
-        _cls_name = '0'
-
         #print('thread id1:', _thread_id)
 
         ### declare global variables
@@ -122,7 +117,7 @@ def main():
                     lock.release()
 
             ### testing code
-            if i == 500:
+            if i == 1000:
                 raise(RuntimeError)
 
             i+=1
@@ -144,13 +139,8 @@ def main():
 
 
 def sense(te):
-    global start_time#///// private variables to log the traces
-    _thread_id = _thread.get_ident()
-    _fun_name = 'sense'
-    _cls_name = '0'
+    global start_time
 
-    #/// update the thread status
-    
     try: #////
         ### The acceleration info is requested from the sensor at every loop
         #acceleration = li.acceleration()
@@ -168,12 +158,6 @@ def sense(te):
 
 def loracom(socket, timer):
     global start_time
-
-    #///// private variables to log the traces
-    _thread_id = _thread.get_ident()
-    _fun_name = 'loracom'
-    _cls_name = '0'
-    #//// update the thread status
 
     try: #/////
         #print('thread 2:', _thread.get_ident())   
@@ -207,11 +191,6 @@ def loracom(socket, timer):
         pycom.heartbeat(True)
 
 def lora_cb(lora):
-    #///// private variables to log the traces
-    _thread_id = _thread.get_ident()
-    _fun_name = 'lora_cb'
-    _cls_name = '0'
-
     global g_ack
     g_ack = True
 
@@ -247,33 +226,17 @@ class control:
 
     @classmethod
     def updatedata(cls, data):
-        #///// private variables to log the traces
-        _thread_id = _thread.get_ident()
-        _fun_name = 'updatedata'
-        _cls_name = cls.__name__
-
         ### update the sensor data in shared variable
         cls.sensor_data = [data]
         #//// logging
     
     @classmethod
     def readdata(cls):
-        #///// private variables to log the traces
-        _thread_id = _thread.get_ident()
-        _fun_name = 'readdata'
-        _cls_name = cls.__name__
-
-        #//// logging
         ### read the sensor data from shared variable
         return cls.sensor_data
     
     @classmethod
     def init_timer0(cls):
-        #///// private variables to log the traces
-        _thread_id = _thread.get_ident()
-        _fun_name = 'init_timer0'
-        _cls_name = cls.__name__
-
         ### initialize the timer object with duration equal to time
         #cls.timer0.init(Timer.ONE_SHOT, time, cls.sett0)
         #timer0 = Timer.Alarm(cls.sett0, time, periodic=False)  ### time in seconds, as no arguments passed to callback it passes the object itself
@@ -285,22 +248,11 @@ class control:
     
     @classmethod
     def read_timer0(cls):
-        #///// private variables to log the traces
-        _thread_id = _thread.get_ident()
-        _fun_name = 'read_timer0'
-        _cls_name = cls.__name__
-
-        #//// logging
         ### get the count of timer0 to check if it has completed counting (milliseconds)
         return cls.timer0.read_ms()
     
     @classmethod
     def reset_timer0(cls):
-        #///// private variables to log the traces
-        _thread_id = _thread.get_ident()
-        _fun_name = 'reset_timer0'
-        _cls_name = cls.__name__
-
         ### reset chrono timer
         cls.timer0.reset()
 
@@ -308,11 +260,6 @@ class control:
     
     @classmethod
     def stop_timer0(cls):
-        #///// private variables to log the traces
-        _thread_id = _thread.get_ident()
-        _fun_name = 'stop_timer0'
-        _cls_name = cls.__name__
-
         ### stop chrono timer
         cls.timer0.stop()
 
@@ -323,10 +270,6 @@ class control:
         '''
         data: transmitted packets 
         '''
-        _thread_id = _thread.get_ident()
-        _fun_name = 'update_txmsg'
-        _cls_name = cls.__name__
-
         cls.msg_queue += [data]
         #print('Tx:', cls.msg_queue)
 
@@ -336,10 +279,6 @@ class control:
         '''
         remove the packet if ack received
         '''
-        _thread_id = _thread.get_ident()
-        _fun_name = 'update_rxmsg'
-        _cls_name = cls.__name__
-
         drop = cls.msg_queue.pop(-1)
         print('Rx:',cls. msg_queue)
 
