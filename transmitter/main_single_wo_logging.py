@@ -97,7 +97,7 @@ def main():
             else: 
                 print(temperature)
                 with open('temp_log', 'a')as f:
-                    f.write("{} {}".format(temperature, utime.ticks_ms() - vl.created_timestamp))
+                    f.write("{} {}".format(temperature, utime.ticks_ms() - start_time))
 
             ### transmit data periodically
             #print('timer status:', control.read_timer0())
