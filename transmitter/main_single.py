@@ -16,8 +16,6 @@ from machine import Pin
 from ds18x20_single import DS18X20Single
 from onewire import OneWire
 
-### Import of a file containing functions for connecting to TTN.
-import LoRaConnection
 
 from lib.varlogger import VarLogger as vl
 
@@ -176,7 +174,7 @@ def sense(te):
         temperature = te.read_temp()
         vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id, val=temperature)
         te.convert_temp()
-        utime.sleep(1)
+        utime.sleep(0.5)
     except Exception as e: #////
         #//// save the traces to flash
         vl.save() 
