@@ -16,10 +16,18 @@ from machine import Pin
 from ds18x20_single import DS18X20Single
 from onewire import OneWire
 
-### Import of a file containing functions for connecting to TTN.
-import LoRaConnection
 
-# from lib.varlogger import VarLogger as vl
+#from lib.varlogger import VarLogger as vl
+
+#### measuring performance metrics ####
+import micropython
+import gc
+start_time_exe = utime.ticks_cpu()  # Start time measurement
+gc.collect()  # Force garbage collection to check memory usage
+avg_memory = 0
+total_gc = 2561344 ### total memory allocated from micropython.nen_info()
+
+
 
 #############################
 #### Single Thread Code #####
@@ -33,9 +41,10 @@ g_ack = False
 def main():
     try:
         #print('thread id1:', _thread_id)
-
+        print('main started')
         ### declare global variables
         global g_ack
+        global avg_memory
 
         #/// update the thread status
 
@@ -90,10 +99,10 @@ def main():
             
             ### push data to control and signal the communication thread to tx the data
             if temperature != None:
-                lock.acquire()
+                # lock.acquire()
                 control.updatedata(temperature)
                 #print('temp:', temperature)
-                lock.release()
+                # lock.release()
             else: 
                 print(temperature)
                 with open('temp_log', 'a')as f:
@@ -111,18 +120,29 @@ def main():
 
                 if events & LoRa.RX_PACKET_EVENT:
                     print('Lora packet received')
-                    lock.acquire()
+                    # lock.acquire()
                     ### remove the packet from queue if ack received
                     control.update_rxmsg()
-                    lock.release()
+                    # lock.release()
 
             ### testing code
-            if i == 1000:
+            end_interval = 500
+            if i == end_interval:
+                end_time_exe = utime.ticks_cpu()  # End time measurement
+                execution_time = utime.ticks_diff(end_time_exe, start_time_exe)
+                memory_usage = total_gc - gc.mem_free()
+                avg_memory /= end_interval
+                print("Execution Time:", execution_time, 'cpu ticks')
+                print("Memory Usage:", memory_usage, 'bytes')
+                print("Average Memory Usage:", avg_memory, 'bytes')
                 raise(RuntimeError)
 
             i+=1
+            avg_memory += total_gc - gc.mem_free()   ### accumulate memory usage for all iterations
+            print('avg_memory for ', i, ': ', total_gc - gc.mem_free())          
             # print(i, utime.ticks_ms() - vl.created_timestamp)
             #//// logging
+            gc.collect()
 
         ### Turn on the PyCom "Heartbeat" - the constant blinking of the indicator LED
         pycom.heartbeat(True)
@@ -163,9 +183,9 @@ def loracom(socket, timer):
         #print('thread 2:', _thread.get_ident())   
         
         #print('lora:', utime.ticks_diff(utime.ticks_ms(), start_time)) ### use ticks_diff only fordebugging
-        lock.acquire()
+        # lock.acquire()
         data = str(control.readdata()[0])
-        lock.release()
+        # lock.release()
         #//// logging
         #print(data)
         
@@ -175,10 +195,10 @@ def loracom(socket, timer):
 
         ### send some data
         socket.send('123456') ### send dummy data to check at receiver side
-        lock.acquire()
+        # lock.acquire()
         ### add the packet to msg_queue to keep track of packet delivery
         control.update_txmsg(data)
-        lock.release()
+        # lock.release()
         print('Data sent')
         timer.done = False
 
@@ -289,10 +309,11 @@ class control:
 try:
     ### initialize it outside the scope of any function to allow access to all the code
     start_time = utime.ticks_ms()
-    #### get lock to regulate the access to shared resources
-    lock = _thread.allocate_lock()
-    #/// update the thread status
-    main_thread = _thread.start_new_thread(main, ())
+    # #### get lock to regulate the access to shared resources
+    # lock = _thread.allocate_lock()
+    # #/// update the thread status
+    # main_thread = _thread.start_new_thread(main, ())
+    main()
                
 
 except Exception as e:

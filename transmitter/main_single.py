@@ -19,6 +19,15 @@ from onewire import OneWire
 
 from lib.varlogger import VarLogger as vl
 
+#### measuring performance metrics ####
+import micropython
+import gc
+start_time_exe = utime.ticks_cpu()  # Start time measurement
+gc.collect()  # Force garbage collection to check memory usage
+avg_memory = 0
+total_gc = 2561344 ### total memory allocated from micropython.nen_info()
+
+
 #############################
 #### Single Thread Code #####
 #############################
@@ -39,6 +48,7 @@ def main():
 
         ### declare global variables
         global g_ack
+        global avg_memory
 
         #/// update the thread status
         vl.thread_status(_thread_id, 'active')   
@@ -133,13 +143,24 @@ def main():
                     lock.release()
 
             ### testing code
-            if i == 500:
+            end_interval = 500
+            if i == end_interval:
+                end_time_exe = utime.ticks_cpu()  # End time measurement
+                execution_time = utime.ticks_diff(end_time_exe, start_time_exe)
+                memory_usage = total_gc - gc.mem_free()
+                avg_memory /= end_interval
+                print("Execution Time:", execution_time, 'cpu ticks')
+                print("Memory Usage:", memory_usage, 'bytes')
+                print("Average Memory Usage:", avg_memory, 'bytes')
                 raise(RuntimeError)
 
             i+=1
-            print(i, utime.ticks_ms() - vl.created_timestamp)
+            avg_memory += total_gc - gc.mem_free()   ### accumulate memory usage for all iterations
+            print('avg_memory for ', i, ': ', total_gc - gc.mem_free())
+            # print(i, utime.ticks_ms() - vl.created_timestamp)
             #//// logging
             vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id, val=i)
+            gc.collect()
 
         ### Turn on the PyCom "Heartbeat" - the constant blinking of the indicator LED
         pycom.heartbeat(True)
@@ -174,7 +195,7 @@ def sense(te):
         temperature = te.read_temp()
         vl.log(var='temperature', fun=_fun_name, clas=_cls_name, th=_thread_id, val=temperature)
         te.convert_temp()
-        utime.sleep(0.5)
+        utime.sleep(1)
     except Exception as e: #////
         #//// save the traces to flash
         vl.save() 
