@@ -36,6 +36,9 @@ total_gc = 2561344 ### total memory allocated from micropython.nen_info()
 global g_ack
 g_ack = False
 
+global DETECTION
+DETECTION = False
+
 ### put all the functionality in different functions to be able to run in multiple threads, use a class with methods as '@classmethod' so that we can pass class itslef as an argument and dont need to make an instance to be able to use class variables
 def main():
     try:
@@ -156,7 +159,7 @@ def main():
 
             i+=1
             avg_memory += total_gc - gc.mem_free()   ### accumulate memory usage for all iterations
-            print('avg_memory for ', i, ': ', total_gc - gc.mem_free())
+            # print('avg_memory for ', i, ': ', total_gc - gc.mem_free())
             # print(i, utime.ticks_ms() - vl.created_timestamp)
             #//// logging
             vl.log(var='i', fun=_fun_name, clas=_cls_name, th=_thread_id, val=i)
@@ -396,7 +399,7 @@ class control:
 
         drop = cls.msg_queue.pop(-1)
         vl.log(var='drop',fun=_fun_name, clas=_cls_name, th=_thread_id, val=drop)
-        print('Rx:',cls. msg_queue)
+        print('Queue:',cls. msg_queue)
 
 
 #####################################################

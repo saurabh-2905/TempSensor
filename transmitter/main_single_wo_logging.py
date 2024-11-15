@@ -300,7 +300,7 @@ class control:
         remove the packet if ack received
         '''
         drop = cls.msg_queue.pop(-1)
-        print('Rx:',cls. msg_queue)
+        print('Queue:',cls. msg_queue)
 
 
 #####################################################
