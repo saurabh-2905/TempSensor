@@ -155,6 +155,8 @@ def main():
                 print("Execution Time:", execution_time, 'cpu ticks')
                 print("Memory Usage:", memory_usage, 'bytes')
                 print("Average Memory Usage:", avg_memory, 'bytes')
+                avg_detection_stats = vl.avg_detection_time
+                print('Average Detection Time:', avg_detection_stats[0]/avg_detection_stats[1], 'ms')
                 raise(RuntimeError)
 
             i+=1
