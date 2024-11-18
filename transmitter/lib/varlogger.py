@@ -140,24 +140,24 @@ class VarLogger:
         #print(cls._write_count)
         ### write to flash approx every 6 secs (counting to 1000 = 12 ms)
         num_events = cls.TRACE_LENGTH
-        if (cls._write_count >= num_events and save != False):
-            cls._write_count = 0
-            start_time = utime.ticks_ms()
-            cls.write_data() ### save the data to flash
-            cls.overhead_time += (utime.ticks_ms()-start_time)   ### add the time taken to write to flash to avoid spikes in time
-            print('write time for {}:'.format(num_events), utime.ticks_ms()-start_time)
-            cls.data = [] ### clear the data after writing to flash
-            gc.collect()
+        if (cls._write_count >= num_events):
+            if save!=False:
+                cls._write_count = 0
+                start_time = utime.ticks_ms()
+                cls.write_data() ### save the data to flash
+                cls.overhead_time += (utime.ticks_ms()-start_time)   ### add the time taken to write to flash to avoid spikes in time
+                print('write time for {}:'.format(num_events), utime.ticks_ms()-start_time)
+                cls.data = [] ### clear the data after writing to flash
+                gc.collect()
         
-        ### check if in DETECTION mode 
-        if cls.DETECTION: 
-            ### perform detection after every 100 events and only if detection flag not False
-            # print('detection condition:', (cls._write_count+1) % 100 == 0 and cls._write_count!=0 and detection != False )
-            # print('cls._write_count:', cls._write_count)
-            if (cls._write_count+1) % 100 == 0 and cls._write_count!=0 and detection != False :
+            ### check if in DETECTION mode 
+            if cls.DETECTION and detection!=False: 
                 start_time = utime.ticks_ms()
                 anomalies_detected = cls.ei_model.runtime_detection(cls.detection_buffer, cls.thresholds, cls._int2var)
-                merged_anomalies, _ = cls.ei_model.merge_detections(anomalies_detected)
+                if len(anomalies_detected) > 1:
+                    merged_anomalies, _ = cls.ei_model.merge_detections(anomalies_detected)
+                else:
+                    merged_anomalies = anomalies_detected
                 print('Anomalies detected:\n', merged_anomalies)
                 cls.save_detections(merged_anomalies)
                 cls.clear_detection_buffer()
@@ -165,7 +165,7 @@ class VarLogger:
                 print('Detection Time:', utime.ticks_ms()-start_time)
                 cls.avg_detection_time[0] += (utime.ticks_ms()-start_time)
                 cls.avg_detection_time[1] += 1
-            pass
+            
 
         ### check previous 3 events to avoid duplicate events
         cls.prev2_event = cls.prev1_event
@@ -269,12 +269,14 @@ class VarLogger:
                     _detections = json.load(f)
                     _detections.extend(detections)
                     with open('detections.json', 'w') as f:
-                        json.dump(_detections, f)
+                        to_write = json.dumps(_detections)
+                        f.write(to_write)
                         print('Detections saved')
             else:
                 ### create a new file and save detections
                 with open('detections.json', 'w') as f:
-                    json.dump(detections, f)
+                    to_write = json.dumps(detections)
+                    f.write(to_write)
                     print('Detections saved')
         else:
             return
