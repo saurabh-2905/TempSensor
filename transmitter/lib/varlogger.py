@@ -69,6 +69,7 @@ class VarLogger:
     _vardict = dict() ### dict of variables
     cur_file = 0 ### file number
     overhead_time = 0 ### time to write to flash
+    avg_detection_time = [0,0]  ### totoal detection time for all detections, count of detections
     
 
     ####### thread tracking
@@ -143,7 +144,7 @@ class VarLogger:
             cls._write_count = 0
             start_time = utime.ticks_ms()
             cls.write_data() ### save the data to flash
-            cls.overhead_time += utime.ticks_ms()-start_time   ### add the time taken to write to flash to avoid spikes in time
+            cls.overhead_time += (utime.ticks_ms()-start_time)   ### add the time taken to write to flash to avoid spikes in time
             print('write time for {}:'.format(num_events), utime.ticks_ms()-start_time)
             cls.data = [] ### clear the data after writing to flash
             gc.collect()
@@ -160,8 +161,10 @@ class VarLogger:
                 print('Anomalies detected:\n', merged_anomalies)
                 cls.save_detections(merged_anomalies)
                 cls.clear_detection_buffer()
-                cls.overhead_time += utime.ticks_ms()-start_time   ### add the time taken to write to flash to avoid spikes in time
+                cls.overhead_time += (utime.ticks_ms()-start_time )  ### add the time taken to write to flash to avoid spikes in time
                 print('Detection Time:', utime.ticks_ms()-start_time)
+                cls.avg_detection_time[0] += (utime.ticks_ms()-start_time)
+                cls.avg_detection_time[1] += 1
             pass
 
         ### check previous 3 events to avoid duplicate events
@@ -259,11 +262,22 @@ class VarLogger:
         '''
         save the detections to a file
         '''
-        if 'detections.json' in os.listdir():
-            ### append detections to the existing file
-            with open('detections.json', 'a') as f:
-                json.dump(detections, f)
-                print('Detections saved')
+        if detections != []:
+            if 'detections.json' in os.listdir():
+                ### append detections to the existing file
+                with open('detections.json', 'r') as f:
+                    _detections = json.load(f)
+                    _detections.extend(detections)
+                    with open('detections.json', 'w') as f:
+                        json.dump(_detections, f)
+                        print('Detections saved')
+            else:
+                ### create a new file and save detections
+                with open('detections.json', 'w') as f:
+                    json.dump(detections, f)
+                    print('Detections saved')
+        else:
+            return
         
     # @classmethod
     # def check_files(cls):
@@ -299,7 +313,7 @@ class VarLogger:
                 # json.dump(cls.data1, fp)
                 print('buffer1 saved', cls.trace_name)
                 ### clear the buffer after writing to flash
-                cls.save_buffer = 2
+                cls.save_buffer = 0
                 gc.collect()  # Run garbage collection again, if needed
                 before = gc.mem_free()  # Get available memory after allocation
                 cls.data1 = [(0, 0)] * cls.TRACE_LENGTH
@@ -315,7 +329,7 @@ class VarLogger:
                 # json.dump(cls.data2, fp)
                 print('buffer2 saved', cls.trace_name)
                 ### clear the buffer after writing to flash
-                cls.save_buffer = 1
+                cls.save_buffer = 0
                 cls.data2 = [(0, 0)] * cls.TRACE_LENGTH
 
         with open('varlist'+ cls.trace_name[5:], 'w') as fp: ### save the variable list for each log file
