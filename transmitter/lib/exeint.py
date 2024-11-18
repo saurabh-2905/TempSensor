@@ -45,7 +45,7 @@ class exeInt:
                                 print('Anomaly detected for {} at '.format(var), timestamps[i])
                                 print('exe_time:', exe_time, 'threshold var', thresholds[var])
                                 lb = max(timestamps[i]-(thresholds[var][1]*1000*1.5), timestamps[i]-15000)
-                                detected_anomalies += [[(var,0), (lb, timestamps[i]), None]]
+                                detected_anomalies += [[(key,0), (lb, timestamps[i]), None]]
         return detected_anomalies
     
 
